@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Biomed RAG — literature assistant</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="brand">
+        <span class="logo" aria-hidden="true">◆</span>
+        <div>
+          <h1>Biomed literature RAG</h1>
+          <p class="tag">Retrieval + graph context · local Ollama</p>
+        </div>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section class="panel ask-panel" aria-labelledby="q-label">
+        <label id="q-label" for="q">Research question</label>
+        <textarea
+          id="q"
+          rows="4"
+          placeholder="e.g. What outcomes are reported for semaglutide in type 2 diabetes trials?"
+          aria-describedby="examples-hint"
+        ></textarea>
+        <p id="examples-hint" class="examples-label">Examples</p>
+        <div id="examples" class="examples" role="group" aria-label="Example questions"></div>
+        <div class="row">
+          <button type="button" id="go" class="primary">Run query</button>
+          <span id="spinner" class="spinner hidden" aria-hidden="true"></span>
+          <span id="status" class="status" role="status" aria-live="polite"></span>
+        </div>
+        <p class="kbd-hint"><kbd>⌘</kbd><kbd>Enter</kbd> or <kbd>Ctrl</kbd><kbd>Enter</kbd> to run</p>
+      </section>
+
+      <p id="disclaimer" class="disclaimer hidden"></p>
+
+      <section id="answer-wrap" class="panel answer-panel hidden" aria-labelledby="answer-heading">
+        <div class="panel-head">
+          <h2 id="answer-heading">Answer</h2>
+          <button type="button" id="copy-answer" class="ghost" disabled>Copy markdown</button>
+        </div>
+        <article id="answer" class="md"></article>
+      </section>
+
+      <section id="sources-wrap" class="panel sources-panel hidden" aria-labelledby="sources-heading">
+        <h2 id="sources-heading">Retrieved sources</h2>
+        <p class="hint">
+          Reranked passages (whitelist for this run). PMIDs open in
+          <a href="https://pubmed.ncbi.nlm.nih.gov/" target="_blank" rel="noopener">PubMed</a>.
+          Topic tags use <code>data/topic_model.json</code> when present.
+        </p>
+        <ul id="sources" class="sources"></ul>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

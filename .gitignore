@@ -1,0 +1,15 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Large / machine-local artifacts (rebuild with ingest)
+data/*
+!data/.gitkeep
+!data/eval_questions.json

@@ -1,0 +1,17 @@
+{
+  "description": "Smoke questions for manual or scripted checks after ingest (same domain as default PubMed query).",
+  "questions": [
+    {
+      "id": "semaglutide_outcomes",
+      "text": "What outcomes are reported for semaglutide in type 2 diabetes?"
+    },
+    {
+      "id": "glp1_weight",
+      "text": "What does the literature report about GLP-1 agonists and body weight?"
+    },
+    {
+      "id": "tirzepatide_compare",
+      "text": "How is tirzepatide discussed relative to other incretin therapies in the retrieved abstracts?"
+    }
+  ]
+}
