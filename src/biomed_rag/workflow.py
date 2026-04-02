@@ -1,7 +1,4 @@
-"""LangGraph: hybrid retrieve → graph context → outcome JSON (hints) → synthesize.
-
-Quality comes from retrieval, corpus, embeddings, and KG — not from rewriting model output.
-"""
+"""LangGraph workflow: retrieve → extract outcome hints → synthesize answer."""
 
 from __future__ import annotations
 

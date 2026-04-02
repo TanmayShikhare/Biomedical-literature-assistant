@@ -34,7 +34,7 @@ def main() -> None:
     qdisp = (q[:120] + "…") if len(q) > 120 else q
     print(f"  default_pubmed_query (config): {qdisp}")
     print()
-    print("To grow the corpus: ingest.py --reset --max-papers N (see RUNBOOK.md).")
+    print("To grow the corpus: python scripts/ingest.py --reset --max-papers N")
 
 
 if __name__ == "__main__":

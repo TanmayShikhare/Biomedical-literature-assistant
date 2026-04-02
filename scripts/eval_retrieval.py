@@ -2,8 +2,7 @@
 """
 Measure whether expected PMIDs appear after retrieval (no LLM).
 
-Copy retrieval_eval.example.json to retrieval_eval.json and edit PMIDs you care about.
-Run after ingest so Chroma + BM25 exist.
+Requires retrieval_eval.json (see README). Run after ingest so the vector index exists.
 """
 
 from __future__ import annotations
@@ -93,7 +92,7 @@ def main() -> None:
     if not path.is_absolute():
         path = ROOT / path
     if not path.exists():
-        print(f"Create {path} (copy from retrieval_eval.example.json).", file=sys.stderr)
+        print(f"Missing {path}. Add retrieval_eval.json (see README).", file=sys.stderr)
         sys.exit(1)
 
     data = json.loads(path.read_text(encoding="utf-8"))

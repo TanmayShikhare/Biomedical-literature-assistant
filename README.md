@@ -1,163 +1,144 @@
-# Biomed Literature RAG
+# Biomedical literature assistant
 
-**Hybrid RAG over a curated PubMed slice** — dense + BM25 retrieval, cross-encoder rerank, optional **knowledge-graph** context (Ollama-extracted triples), **LangGraph** orchestration, and a **local web UI** (FastAPI + static frontend). Answers are grounded with an **allowed-PMID** policy and researcher-oriented prompts.
+Search and summarize PubMed abstracts that **you** index locally. Responses link to the **underlying publications** so the text can be checked in the source. The stack runs on **your machine** (Python and [Ollama](https://ollama.com/) for the language model).
 
-> **Suggested GitHub repository name:** `pubmed-biomed-rag` (or `biomed-literature-rag`). The folder name can stay `pubmed_biomed_rag`.
-
----
-
-## Who this is for
-
-Researchers and reviewers who want **navigable, cited summaries** over a **defined literature subset** they control (ingest), not a black-box medical chatbot.
-
-**Not medical advice.** Use for literature context and reference discovery only; verify claims in primary papers.
-
-**NCBI:** Follow [E-utilities guidelines](https://www.ncbi.nlm.nih.gov/books/NBK25497/); set `NCBI_EMAIL` in `.env` for PubMed ingest.
+**Audience:** students and researchers who want **cited, literature-style summaries** over a **corpus they define**. This is **not** a substitute for reading papers or for clinical decisions.
 
 ---
 
-## If I put this on GitHub, how do people “see” the app?
+## What this repository contains
 
-| What | Reality |
-|------|---------|
-| **GitHub** | Hosts **code** and small files (e.g. smoke questions). It does **not** run Ollama, Chroma, or your index. |
-| **Visitors** | They **clone**, install, run **ingest** (to build `data/`), then **`serve.py`** — same as you. |
-| **A public website** | You must **deploy** the stack somewhere (server + Python + disk + LLM). See **[DEPLOYMENT.md](DEPLOYMENT.md)**. |
-| **Streamlit Cloud** | Only runs **Streamlit** apps. This project’s UI is **FastAPI + HTML/JS**. Moving to Streamlit means **rewriting the frontend**, not flipping a switch. The current UI works fine for local use and can be deployed with FastAPI anywhere Python runs. |
-
----
-
-## Requirements
-
-| Requirement | Notes |
-|-------------|--------|
-| **Python** | **3.10+** recommended (3.9 often works). |
-| **Disk** | Chroma + embeddings + HF models grow with corpus size (gigabytes for thousands of papers). |
-| **RAM** | Embedding models + Ollama (e.g. 7B) — plan several GB free. |
-| **[Ollama](https://ollama.com/)** | Local LLM for **synthesis** and (if not `--skip-graph`) **triple extraction** during ingest. |
-| **NCBI email** | Required in `.env` for **ingest** via Entrez. Optional `NCBI_API_KEY` for higher rate limits. |
+| Item | Role |
+|------|------|
+| **`requirements.txt`** | Python dependencies (install with `pip`). |
+| **`pyproject.toml`** | Package metadata for installing `src/biomed_rag` as a package (optional; `pip install -r requirements.txt` is the usual path). |
+| **`.env.example`** | Environment variable template. Copy to **`.env`** and edit; **`.env` is not committed** to git. |
+| **`Makefile`** | Shortcuts such as `make test` and `make install` (optional). |
+| **`retrieval_eval.json`** | Optional **retrieval benchmark**: questions and PMIDs that should appear in the retrieval set after ingest. Used by `scripts/eval_retrieval.py` to check recall **without** calling the LLM. Not required to run the application. |
+| **`data/eval_questions.json`** | Sample questions for `scripts/eval_smoke.py` (end-to-end check). |
+| **`.github/workflows/ci.yml`** | Runs tests on push/pull request. |
 
 ---
 
-## Quick start (clone → first query)
+## Clone vs. hosted app
 
-Do these **in order** from the repository root.
+GitHub stores **source code** only. It does not run Ollama, the vector index, or the server.
 
-1. **Clone and enter the repo**
-   ```bash
-   git clone <your-repo-url>
-   cd pubmed_biomed_rag
-   ```
+- **To run the app:** clone the repository, follow the steps below, and build a local index under `data/` (that directory is not part of git).
+- **To offer a public URL:** deploy the same stack on a server you control (Python, dependencies, indexed data, and an LLM). There is no hosted demo included in this repository.
 
-2. **Create a virtual environment and install dependencies**
+---
+
+## Prerequisites
+
+- Python **3.10+** (3.9 may work)
+- Enough disk space for embeddings and the vector database (grows with corpus size)
+- **[Ollama](https://ollama.com/)** for local inference (and optional relation extraction during ingest unless skipped)
+- An **NCBI contact email** in `.env` when downloading from PubMed ([E-utilities policy](https://www.ncbi.nlm.nih.gov/books/NBK25497/))
+
+---
+
+## Setup and first run
+
+1. **Virtual environment**
    ```bash
    python3 -m venv .venv
-   source .venv/bin/activate          # Windows: .venv\Scripts\activate
+   source .venv/bin/activate    # Windows: .venv\Scripts\activate
    pip install -r requirements.txt
    ```
 
-3. **Configure environment**
+2. **Environment file**
    ```bash
    cp .env.example .env
    ```
-   Edit **`.env`**: set `NCBI_EMAIL`, and `OLLAMA_MODEL` (e.g. `qwen2.5:7b`). Pull the model:
+   Set at least `NCBI_EMAIL`. Set `OLLAMA_MODEL` as needed, then install the model, for example:
    ```bash
    ollama pull qwen2.5:7b
    ```
 
-4. **Ingest a small corpus** (creates `data/chroma`, `articles.jsonl`, BM25 index, optional triples — **not** in git; you build locally)
+3. **Build an index** (creates files under `data/` locally; not stored in git)
    ```bash
    python scripts/ingest.py --max-papers 50
    ```
-   For a larger default slice and tuning, see **[RUNBOOK.md](RUNBOOK.md)**.
+   Use a larger `--max-papers` value for a bigger corpus. After changing embedding settings, re-ingest with `--reset`. See `python scripts/ingest.py --help`.
 
-5. **(Optional) Topic labels for the UI**
+4. **Optional:** corpus topic labels for the web UI
    ```bash
    python scripts/topics_fit.py
    ```
 
-6. **Ask from the terminal**
+5. **Command-line query**
    ```bash
-   python scripts/ask.py "What outcomes are reported for semaglutide in type 2 diabetes?"
+   python scripts/ask.py "Your question here"
    ```
 
-7. **Run the web UI + API** (keep **Ollama** running in another terminal: `ollama serve`)
+6. **Browser UI and API** — with Ollama running (`ollama serve`):
    ```bash
-   source .venv/bin/activate
    python scripts/serve.py
    ```
-   Open **http://127.0.0.1:8000/** (or `--port 8001` if 8000 is busy).
+   Open [http://127.0.0.1:8000](http://127.0.0.1:8000). If the port is in use: `python scripts/serve.py --port 8001`.
 
-8. **Smoke check** (after ingest)
-   ```bash
-   python scripts/eval_smoke.py
-   ```
-
-**Wrong virtualenv?** If you see `No module named 'fastapi'`, you are not using this repo’s `.venv`. Run:
-`.venv/bin/python scripts/serve.py`
+If imports fail (e.g. `fastapi`), the active Python environment is wrong. Use this project’s interpreter: `.venv/bin/python scripts/serve.py`.
 
 ---
 
-## Configuration highlights (`.env`)
+## Configuration
 
-| Variable | Role |
-|----------|------|
-| `NCBI_EMAIL` | Required for ingest. |
-| `OLLAMA_MODEL` / `OLLAMA_BASE_URL` | Chat model and Ollama URL. |
-| `OLLAMA_TEMPERATURE` | Synthesis temperature; **0.0** recommended. |
-| `EMBEDDING_MODEL` | Sentence-transformers id; after any change, **re-ingest with `--reset`**. |
-| `RETRIEVAL_TOP_K`, `RERANK_TOP_K` | Chunk recall vs passages sent to the LLM. |
-| `USE_HYBRID_RETRIEVAL`, `GRAPH_EXPAND_*` | BM25 + RRF and KG expansion. |
+Copy from `.env.example`. Common variables:
 
-See **`.env.example`** for the full list.
-
----
-
-## Stack (short)
-
-- **Ingest:** Biopython Entrez → chunks → **sentence-transformers** → **Chroma**; optional Ollama **triples** → `triples.jsonl`.
-- **Query:** **Dense + BM25 (RRF)** → **cross-encoder rerank** → graph context → **outcome JSON hint** → **Ollama synthesis** (citation clamping to retrieved PMIDs).
-- **UI:** `GET /` static app, `POST /ask` JSON API, `GET /health`.
-
-More detail: **[ROADMAP.md](ROADMAP.md)** · step-by-step ops: **[RUNBOOK.md](RUNBOOK.md)**.
+| Variable | Purpose |
+|----------|---------|
+| `NCBI_EMAIL` | Required for PubMed ingest |
+| `OLLAMA_MODEL` | Ollama model name |
+| `OLLAMA_TEMPERATURE` | Synthesis temperature; `0.0` is a stable default |
+| `EMBEDDING_MODEL` | Sentence-transformers model; change requires re-ingest with `--reset` |
+| `RETRIEVAL_TOP_K`, `RERANK_TOP_K` | Retrieval breadth vs. number of passages sent to the model |
 
 ---
 
-## Scaling ingest
+## Architecture (summary)
 
-Vector index can reach **thousands** of papers; **triple extraction** is roughly **one LLM call per article** (slow at large N). Patterns:
-
-- Full graph on subset: `ingest.py --max-papers 2000 --max-triple-articles 400`
-- Vectors only: `--skip-graph`
-
-Always use **`--reset`** when replacing an old index so chunk IDs and BM25 stay consistent.
-
-**Retrieval QA:** `python scripts/eval_retrieval.py` (see `retrieval_eval.json`).
+- **Ingest:** PubMed records → text chunks → embeddings in **Chroma**; optional extraction of relations to JSONL.
+- **Query:** vector search, optional BM25 fusion, cross-encoder reranking, optional graph context, then a local LLM produces an answer restricted to citations from the retrieved set.
+- **Serving:** `scripts/serve.py` exposes a static web UI and a JSON `POST /ask` endpoint.
 
 ---
 
-## Makefile
+## Tests and optional evaluations
 
 ```bash
 make install
 make test
 ```
 
+Smoke test (requires a built index and Ollama):
+
+```bash
+python scripts/eval_smoke.py
+```
+
+Retrieval-only benchmark (optional; checks whether listed PMIDs appear in retrieval for each question):
+
+```bash
+python scripts/eval_retrieval.py
+```
+
+Edit **`retrieval_eval.json`** to match the corpus and the PMIDs that should be recoverable after ingest.
+
 ---
 
 ## Repository layout
 
-| Path | Purpose |
-|------|---------|
-| `src/biomed_rag/` | Library (config, workflow, retrieval, prompts, …) |
-| `scripts/` | CLI: `ingest.py`, `ask.py`, `serve.py`, `eval_smoke.py`, … |
-| `web/` | Static frontend (served by `serve.py`) |
-| `data/` | **Local only** (gitignored except `eval_questions.json`): Chroma, `articles.jsonl`, `triples.jsonl`, etc. |
-| `data/eval_questions.json` | Bundled smoke questions (tracked in git) |
-| `tests/` | `pytest` |
+| Path | Contents |
+|------|----------|
+| `src/biomed_rag/` | Application library |
+| `scripts/` | Command-line tools (ingest, ask, serve, evaluation) |
+| `web/` | Static assets for the browser UI |
+| `data/` | Generated locally (index, manifests, etc.); only `eval_questions.json` is tracked in git |
+| `tests/` | Automated tests |
 
 ---
 
 ## License
 
-**MIT.** PubMed metadata and publisher text remain subject to **NCBI** and publisher terms; do not redistribute full text against those terms.
+MIT. PubMed and publisher terms still govern use of downloaded metadata and full text where applicable.

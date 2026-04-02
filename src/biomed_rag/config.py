@@ -21,30 +21,22 @@ class Settings(BaseSettings):
     ncbi_api_key: Optional[str] = None
 
     ollama_base_url: str = "http://127.0.0.1:11434"
-    # Local chat model (Ollama). Stronger options if your machine fits them: llama3.1:8b, qwen2.5:7b, mistral, etc.
     ollama_model: str = "llama3.2"
-    # Synthesis only (ask.py / workflow). 0.0 reduces hedging drift and contradictory prose; outcome/triple JSON steps already use 0.
     ollama_temperature: float = 0.0
 
-    # Dense retrieval embeddings. Paper RAG: sentence-transformers/allenai-specter (SPECTER).
-    # Lighter / faster: sentence-transformers/all-MiniLM-L6-v2. After changing: full ingest --reset.
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
 
-    # Two-stage RAG: wide dense retrieval → cross-encoder rerank → synthesis
     retrieval_top_k: int = 40
     rerank_top_k: int = 12
     use_cross_encoder_rerank: bool = True
     cross_encoder_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
-    # Hybrid: BM25 (built at ingest) + dense fused with RRF; requires re-ingest after upgrade
     use_hybrid_retrieval: bool = True
     rrf_k: int = 60
 
-    # KG: entity-linked expansion beyond retrieval PMIDs (same entity, other papers)
     graph_expand_entities: bool = True
     graph_expand_max_extra_triples: int = 80
 
-    # Default --max-papers for ingest when CLI omits it (thousands-scale target; override anytime).
     default_ingest_max_papers: int = 2500
 
     data_dir: Path = Path("data")

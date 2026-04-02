@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
 """
-Suggest PMIDs from data/articles.jsonl for building retrieval_eval.json.
+Search data/articles.jsonl for PMIDs whose title or abstract matches keywords.
 
-Greps title+abstract (case-insensitive). Requires ingest + backfill_articles_manifest.
-
-Example:
-  PYTHONPATH=src python scripts/suggest_eval_pmids.py tirzepatide semaglutide
-  PYTHONPATH=src python scripts/suggest_eval_pmids.py --limit 5 "weight loss" GLP-1
+Useful when editing retrieval_eval.json. Requires a prior ingest (and manifest as needed).
 """
 
 from __future__ import annotations
